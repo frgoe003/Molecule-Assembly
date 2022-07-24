@@ -33,8 +33,6 @@ async function getInchi(data_url,chem){
         searchResponse.setAttribute("style","color:red");
     }
     else{
-    
-
     searchResponse.setAttribute("style","color:black");
     let arr=[];
     let dic=["IUPAC","InChI","MW","Formula","SMILES"];
@@ -59,19 +57,6 @@ async function getInchi(data_url,chem){
     structureData.appendChild(specs);
 }};
 
-class molecule{
-    constructor(name) {
-        this.name = name;
-        this.atoms = new Map();
-        this.bonds = new Map();
-        this.atoms_ex_H = new Map();
-        this.bonds_ex_H = new Map();
-      }
-
-    get getTotalM(){
-        
-    } 
-}
 
 async function getMolData(IUPAC){  
     url="https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"+IUPAC+"/sdf";
@@ -83,30 +68,114 @@ async function getMolData(IUPAC){
     let atom_count = parseInt(arr[3].substring(0,3));
     let bonds_count = parseInt(arr[3].substring(3,6));
 
-    console.log(atom_count,bonds_count);
-
     var c=1; var h=1;
     for (let i=4;i<(4+atom_count);i++){
-        currAtom = arr[i].substring(31,33).trim();
-        mol.atoms[c]=currAtom;
-        if (currAtom !== "H"){
-            mol.atoms_ex_H[h]=currAtom;
+        symbol = arr[i].substring(31,33).trim();
+        let currAtom = new atom(c);
+        currAtom.symbol = symbol;
+        mol.atoms.set(c,currAtom);
+        
+        if (currAtom.symbol !== "H"){
+            mol.atoms_ex_H.set(h,currAtom);
             h++;
         }
         c++;    
     }
     var c=1; var h=1;
     for (let i=4+atom_count;i<(4+atom_count+bonds_count);i++){
-        atom1 = parseInt(arr[i].substring(0,3).trim());
-        atom2 = parseInt(arr[i].substring(3,6).trim());
+
+        let atom1 = mol.atoms.get(parseInt(arr[i].substring(0,3).trim()));
+        let atom2 = mol.atoms.get(parseInt(arr[i].substring(3,6).trim()));
+
         type = parseInt(arr[i].substring(6,9).trim());
-        mol.bonds[c]={atom1,atom2,type};
-        if (mol.atoms[atom1]!=="H" && mol.atoms[atom2]!=="H"){
-            mol.bonds_ex_H[h]={atom1,atom2,type};
+        currBond = new bond(atom1,atom2,type);
+        mol.bonds.set(c,{atom1,atom2,type,currBond});
+
+        if (mol.atoms.get(atom1.symbol)!=="H" && mol.atoms.get(atom2.symbol)!=="H"){
+            mol.bonds_ex_H.set(h,{atom1,atom2,type,currBond});
             h++;
         }
+        atom1.bondedTo.push(atom2);
+        atom2.bondedTo.push(atom1);
         c++;   
     }
-    console.log(mol.bonds,mol.atoms);
-    console.log(mol.bonds_ex_H,mol.atoms_ex_H);
+    for (const key of mol.atoms.keys()){
+        currAtom = mol.atoms.get(key);
+        if (currAtom.bondedTo.length>1){
+            mol.atomsHub.push(currAtom);   // OPEN ?! check if H-Bonds are to be included 
+        }
+    }
+
+    console.log(mol.atomsHub);
+    console.log(mol.getTotalM());
 }
+
+
+// fragmentation
+function fragment(molecule){
+    for (let i=0; i<molecule.atomsHub.length;i++){
+        currAtom = molecule.atomsHub[i];
+        
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const getToCutInt=[1,2,5,15,52,0]; //Possibilities to split n bonds, n=6-1 -> default
+
+class atom{
+    constructor(id){
+        this.id = id;
+        this.symbol = new String();
+        this.bondedTo = new Array();
+    }
+}
+class bond{
+    constructor(atom1,atom2,type){
+        this.type = type;
+        this.atom1 = atom1;
+        this.atom2 = atom2;
+    }
+}
+
+class molecule{
+    constructor(name) {
+        this.name = name;
+        this.atoms = new Map();
+        this.bonds = new Map();
+        this.atoms_ex_H = new Map();
+        this.bonds_ex_H = new Map();
+
+        this.atomsHub = new Array();
+      }
+
+    getTotalM(){
+        let M = 1;
+        for (let i=0;i<this.atomsHub.length;i++){
+            currAtom = this.atomsHub[i];
+            M *= getToCutInt[currAtom.bondedTo.length];
+        }
+        return M;
+    } 
+}
+
+
+
+
+
+
+
