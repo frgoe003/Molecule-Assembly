@@ -105,7 +105,9 @@ async function getMolData(IUPAC){
             mol.atomsHub.push(currAtom);   // OPEN ?! check if H-Bonds are to be included 
         }
     }
-
+    console.log(mol.atoms);
+    let res = getToCut(mol.atoms.get(1));
+    console.log(res);
     console.log(mol.atomsHub);
     console.log(mol.getTotalM());
 }
@@ -135,13 +137,14 @@ function fragment(molecule){
 
 
 
-const getToCutInt=[1,2,5,15,52,0]; //Possibilities to split n bonds, n=6-1 -> default
+
 
 class atom{
     constructor(id){
         this.id = id;
         this.symbol = new String();
         this.bondedTo = new Array();
+        this.toCut = new Array();
     }
 }
 class bond{
@@ -174,8 +177,71 @@ class molecule{
 }
 
 
+/* =========================================== */
+const getToCutInt=[1,2,5,15,52,0]; //Possibilities to split n bonds, n=6-1 -> default
 
+function getToCut(currAtom) {
 
+    let bonds = currAtom.bondedTo;
+    n = bonds.length;
 
+    console.log("number of bonds: "+n);
 
-
+	switch (n) {
+	case 2:
+		a = bonds[0];
+		b = bonds[1];
+		return ( // = 2 ways
+			[
+            [a,b],
+            [[a],[b]]
+        ]
+        );
+	case 3:
+		a = bonds[0];
+		b = bonds[1];
+		c = bonds[2];
+		return (
+            [
+            [a,b,c],
+            [[a],[b,c]], [[b],[a,c]], [[c],[a,b]],
+            [[a],[b],[c]]
+        ]
+        );
+	case 4:
+		a = bonds[0];
+		b = bonds[1];
+		c = bonds[2];
+		d = bonds[3];
+		return (
+            [
+            [a,b,c,d],
+            [[a],[b,c,d]], [[b],[a,c,d]], [[c],[a,b,d]], [[d],[a,b,c]],
+            [[a,b],[c,d]], [[b,c],[a,d]], [[a,c],[b,d]], 
+            [[a],[b],[c,d]], [[a],[b],[c,d]],[[a],[b],[c,d]],[[a],[b],[c,d]],[[a],[b],[c,d]],[[a],[b],[c,d]],
+            [[a],[b],[c],[d]]
+        ]
+        );
+	case 5:
+		a = bonds[0];
+		b = bonds[1];
+		c = bonds[2];
+		d = bonds[3];
+		e = bonds[4];
+        return (
+            [
+            [a,b,c,d,e],
+            [[a],[b,c,d,e]], [[b],[a,c,d,e]], [[c],[a,b,d,e]], [[d],[a,b,c,e]], [[e],[a,b,c,d]],
+            [[a,b],[c,d,e]], [[a,c],[b,d,e]], [[a,d],[b,c,e]], [[a,e],[b,c,d]],[[b,c],[a,d,e]], [[b,d],[a,c,e]], [[b,e],[a,c,d]], [[c,d],[a,b,e]],[[c,e],[a,b,d]], [[d,e],[a,b,c]],
+            [[a],[b],[c,d,e]], [[a],[c],[b,d,e]],[[a],[d],[b,c,e]],[[a],[e],[b,c,d]],[[b],[c],[a,d,e]],[[d],[b],[a,c,e]],[[e],[b],[a,c,d]],[[c],[d],[a,b,e]],[[c],[e],[a,b,d]],[[d],[e],[a,b,c]],
+            [[e],[a,b],[c,d]],[[d],[a,b],[c,e]],[[c],[a,b],[d,e]],[[e],[a,c],[b,d]],[[d],[a,c],[b,e]],[[b],[a,c],[d,e]],[[e],[a,d],[b,c]],[[c],[a,d],[b,e]],[[b],[a,d],[c,e]],[[d],[a,e],[b,c]],[[c],[a,e],[b,d]],[[b],[a,e],[c,d]],[[a],[b,c],[d,e]],[[a],[b,d],[c,e]],[[a],[b,e],[c,d]],
+            [[a],[b],[c],[d,e]],[[a],[b],[d],[c,e]],[[a],[b],[e],[d,c]],[[a],[d],[c],[b,e]],[[a],[c],[e],[d,b]],[[a],[d],[e],[b,c]],[[c],[b],[d],[a,e]],[[b],[c],[e],[d,a]],[[e],[b],[d],[a,c]],[[c],[d],[e],[a,b]],
+            [[a],[b],[c],[d],[e]]
+        ]
+        );
+	case 1:
+		return [];
+	default:
+		throw "Error";
+	}
+}
